@@ -77,3 +77,18 @@ Authorization: Bearer <access_token>
 * логировать ошибки и ответы Minimax для диагностики.
 
 REST API подтверждено работает, получение токена и выполнение GET-запросов успешно протестированы.
+
+
+Пример GET полный 
+
+
+{
+  "url": "https://moj.minimax.si/si/api/currentuser/profile",
+  "method": "GET",
+  "headers": {
+    "Authorization": "Bearer <access_token>",
+    "Content-Type": "application/json"
+  },
+  "body": null
+}
+

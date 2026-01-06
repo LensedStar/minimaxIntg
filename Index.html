@@ -1,0 +1,115 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Minimax API Playground</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 16px; max-width: 900px; margin: 0 auto; }
+    textarea, input, select { width: 100%; padding: 10px; margin: 8px 0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono"; }
+    button { padding: 10px 14px; margin: 8px 8px 8px 0; cursor: pointer; }
+    .row { display: grid; grid-template-columns: 1fr 160px; gap: 12px; align-items: end; }
+    pre { background: #111; color: #0f0; padding: 12px; white-space: pre-wrap; word-break: break-word; }
+  </style>
+</head>
+<body>
+  <h2>Minimax API Playground</h2>
+
+  <button id="btnToken">1) Get token (grant_type=password)</button>
+  <div>
+    <label>Access token</label>
+    <textarea id="token" rows="3" placeholder="Token will appear here..."></textarea>
+  </div>
+
+  <hr />
+
+  <div class="row">
+    <div>
+      <label>API path (starts with /)</label>
+      <input id="path" value="/currentuser/profile" />
+    </div>
+    <div>
+      <label>Method</label>
+      <select id="method">
+        <option>GET</option>
+        <option>POST</option>
+        <option>PUT</option>
+        <option>DELETE</option>
+      </select>
+    </div>
+  </div>
+
+  <label>JSON body (for POST/PUT)</label>
+  <textarea id="body" rows="10">{}</textarea>
+
+  <button id="btnCall">2) Call Minimax API</button>
+
+  <h3>Current request</h3>
+  <pre id="req"></pre>
+
+  <h3>Response</h3>
+  <pre id="out"></pre>
+
+  <script>
+    const out = document.getElementById("out");
+    const reqView = document.getElementById("req");
+    const tokenEl = document.getElementById("token");
+
+    document.getElementById("btnToken").onclick = async () => {
+      out.textContent = "Requesting token...";
+      const r = await fetch("/token", { method: "POST" });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        out.textContent = "TOKEN ERROR:\n" + JSON.stringify(data, null, 2);
+        return;
+      }
+      tokenEl.value = data.access_token || "";
+      localStorage.setItem("minimax_token", tokenEl.value);
+      out.textContent = "Token OK:\n" + JSON.stringify(data, null, 2);
+    };
+
+    tokenEl.value = localStorage.getItem("minimax_token") || "";
+
+    document.getElementById("btnCall").onclick = async () => {
+      const path = document.getElementById("path").value.trim();
+      const method = document.getElementById("method").value.trim();
+      let bodyObj = {};
+
+      try {
+        bodyObj = JSON.parse(document.getElementById("body").value || "{}");
+      } catch (e) {
+        out.textContent = "Invalid JSON body: " + e;
+        return;
+      }
+
+      const requestPreview = {
+        url: "https://moj.minimax.si/si/api" + path,
+        method,
+        headers: {
+          Authorization: "Bearer <access_token>",
+          "Content-Type": "application/json"
+        },
+        body: ["GET", "HEAD"].includes(method) ? null : bodyObj
+      };
+
+      reqView.textContent = JSON.stringify(requestPreview, null, 2);
+      out.textContent = "Calling API...";
+
+      const r = await fetch("/minimax", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path, method, body: bodyObj })
+      });
+
+      const text = await r.text();
+      try {
+        out.textContent = JSON.stringify(JSON.parse(text), null, 2);
+      } catch {
+        out.textContent = text;
+      }
+    };
+  </script>
+</body>
+</html>
+
+
+
